@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenWeatherNetwork — carte des stations</title>
+  <meta name="description" content="Carte interactive des stations OpenWeatherNetwork, données issues de ThingSpeak." />
+
+  <!-- Fond de carte Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Styles du site -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <h1><span class="logo">🌦️</span> OpenWeatherNetwork</h1>
+    <span id="status" class="status">Chargement…</span>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <h2>Stations</h2>
+        <span class="legend">
+          <i class="dot on"></i> en ligne
+          <i class="dot off"></i> hors ligne
+        </span>
+      </div>
+      <ul id="station-list" class="station-list"></ul>
+    </aside>
+
+    <section class="content">
+      <div id="map"></div>
+
+      <div id="detail" class="detail" hidden>
+        <div class="detail-head">
+          <h2 id="detail-title"></h2>
+          <span id="detail-meta" class="muted"></span>
+        </div>
+
+        <div id="detail-values" class="values"></div>
+
+        <div class="chart-wrap">
+          <canvas id="chart"></canvas>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Bibliothèques externes -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Logique du site -->
+  <script src="app.js"></script>
+</body>
+</html>
