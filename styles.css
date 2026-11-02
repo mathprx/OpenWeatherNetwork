@@ -1,19 +1,20 @@
 /* ==========================================================================
-   styles.css — Thème sombre, layout carte + panneau latéral
+   styles.css — Thème CLAIR, OpenWeatherNetwork
    ========================================================================== */
 
 :root {
-  --bg:        #12141a;
-  --panel:     #1b1e27;
-  --panel-2:   #232733;
-  --border:    #2b2f3c;
-  --border-hi: #3a4053;
-  --text:      #e8e9ee;
-  --muted:     #9aa0b0;
+  --bg:        #f5f7fb;
+  --panel:     #ffffff;
+  --panel-2:   #f0f3f8;
+  --border:    #dfe4ea;
+  --border-hi: #cdd3de;
+  --text:      #2c3e50;
+  --muted:     #7f8c8d;
   --accent:    #6d4aff;
-  --ok:        #34c759;
-  --off:       #8a8f9c;
+  --ok:        #27ae60;
+  --off:       #95a5a6;
   --radius:    8px;
+  --shadow:    0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 * { box-sizing: border-box; }
@@ -29,8 +30,9 @@ body {
   color: var(--text);
   display: flex;
   flex-direction: column;
-  -webkit-font-smoothing: antialiased;
 }
+
+body.overlay-open { overflow: hidden; }
 
 /* ---------------------------------------------------------------- Barre haute */
 .topbar {
@@ -40,6 +42,7 @@ body {
   padding: 12px 18px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
   flex-shrink: 0;
 }
 
@@ -129,8 +132,8 @@ body {
   transition: border-color 120ms ease, background 120ms ease;
 }
 
-.station-btn:hover  { border-color: var(--border-hi); }
-.station-btn.active { border-color: var(--accent); background: #262a38; }
+.station-btn:hover  { border-color: var(--border-hi); background: #e8ecf3; }
+.station-btn.active { border-color: var(--accent); background: #eef0f7; }
 
 .station-btn .dot {
   width: 9px;
@@ -139,7 +142,7 @@ body {
   margin-top: 5px;
 }
 
-.dot.on  { background: var(--ok);  box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.15); }
+.dot.on  { background: var(--ok);  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.2); }
 .dot.off { background: var(--off); }
 
 .station-btn .name {
@@ -163,21 +166,20 @@ body {
 
 #map {
   min-height: 240px;
-  background: #0e1015;
+  background: #fff;
 }
 
-/* Popups Leaflet accordées au thème sombre */
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
-  background: var(--panel-2);
+  background: var(--panel);
   color: var(--text);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .leaflet-popup-content { margin: 10px 13px; font-size: 13px; line-height: 1.45; }
 .leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
 .leaflet-control-attribution {
-  background: rgba(18, 20, 26, 0.78) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
   color: var(--muted);
 }
 .leaflet-control-attribution a { color: var(--accent); }
@@ -187,7 +189,7 @@ body {
   background: var(--panel);
   border-top: 1px solid var(--border);
   padding: 14px 18px 18px;
-  max-height: 46vh;
+  max-height: 62vh;
   overflow-y: auto;
 }
 
@@ -206,12 +208,62 @@ body {
 
 .muted { font-size: 12px; color: var(--muted); }
 
+.section-label {
+  margin: 4px 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------- Boutons */
+.btn-secondary {
+  margin-left: auto;
+  padding: 7px 13px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: #eef0f7;
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent);
+  background: #e3e6f0;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  font: inherit;
+  font-size: 14px;
+  color: var(--muted);
+  background: var(--panel-2);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.btn-icon:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: #e8ecf3;
+}
+
 /* ---------------------------------------------------------------- Valeurs */
 .values {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin: 12px 0 14px;
+  margin: 12px 0 16px;
 }
 
 .value {
@@ -219,6 +271,7 @@ body {
   padding: 9px 13px;
   background: var(--panel-2);
   border-radius: var(--radius);
+  border: 1px solid var(--border);
 }
 
 .value .label {
@@ -234,33 +287,162 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------------------------------------------------------------- Graphique */
-.chart-wrap {
-  height: 200px;
-  position: relative;
+/* ---------------------------------------------------------------- Graphiques */
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 12px;
 }
 
+.charts-full { grid-template-columns: 1fr; gap: 14px; }
+
+.chart-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 10px 12px 6px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  min-width: 0;
+}
+
+.chart-card-lg {
+  background: #fff;
+}
+
+.chart-card h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+}
+
+.chart-canvas {
+  position: relative;
+  height: 148px;
+}
+
+/* ---------------------------------------------------------------- Plein écran */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  animation: overlay-in 160ms ease-out;
+}
+
+.overlay[hidden] { display: none; }
+
+@keyframes overlay-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.overlay-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  flex-shrink: 0;
+}
+
+.overlay-title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.overlay-title h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.overlay-ranges {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.range-btn {
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--panel-2);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 120ms ease;
+}
+
+.range-btn:hover {
+  color: var(--text);
+  background: #e8ecf3;
+}
+
+.range-btn.active {
+  color: #fff;
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.overlay-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 18px 30px;
+}
+
+#overlay-status { margin: 0 0 12px; }
+
+.chart-card-lg .chart-canvas { height: 236px; }
+
 /* ---------------------------------------------------------------- Responsive */
-@media (max-width: 820px) {
+@media (max-width: 980px) {
+  .layout { grid-template-columns: 264px 1fr; }
+}
+
+@media (max-width: 840px) {
+  .overlay-head { padding: 10px 14px; }
+  .overlay-ranges { margin-left: 0; width: 100%; overflow-x: auto; }
+  .overlay-body { padding: 14px 14px 26px; }
+}
+
+@media (max-width: 760px) {
   .layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
   }
 
   .sidebar {
-    max-height: 34vh;
+    max-height: 32vh;
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
 
-  .detail { max-height: 40vh; }
-  .chart-wrap { height: 170px; }
+  .detail { max-height: 56vh; }
+  .charts { grid-template-columns: 1fr; }
+  .chart-canvas { height: 130px; }
+  .chart-card-lg .chart-canvas { height: 190px; }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 470px) {
   .topbar { padding: 10px 13px; }
   .topbar h1 { font-size: 15px; }
   .status { font-size: 11px; }
-  .value { min-width: 92px; padding: 8px 10px; }
+  .value { min-width: 86px; padding: 8px 10px; }
   .value .num { font-size: 16px; }
+  .overlay-title h2 { font-size: 14px; }
+  .range-btn { padding: 5px 9px; font-size: 11px; }
 }

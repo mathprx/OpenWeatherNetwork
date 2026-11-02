@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OpenWeatherNetwork — carte des stations</title>
-  <meta name="description" content="Carte interactive des stations OpenWeatherNetwork, données issues de ThingSpeak." />
+  <title>OpenWeatherNetwork — Carte des stations</title>
+  <meta name="description" content="Carte interactive des stations météo OpenWeatherNetwork, données issues de ThingSpeak." />
 
   <!-- Fond de carte Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -15,7 +15,7 @@
 
 <body>
   <header class="topbar">
-    <h1><span class="logo">🌦️</span> OpenWeatherNetwork</h1>
+    <h1><span class="logo">🌐</span> OpenWeatherNetwork</h1>
     <span id="status" class="status">Chargement…</span>
   </header>
 
@@ -38,20 +38,50 @@
         <div class="detail-head">
           <h2 id="detail-title"></h2>
           <span id="detail-meta" class="muted"></span>
+          <button id="btn-history" class="btn-secondary" type="button">
+            Historique complet
+          </button>
         </div>
 
         <div id="detail-values" class="values"></div>
 
-        <div class="chart-wrap">
-          <canvas id="chart"></canvas>
-        </div>
+        <p class="section-label">24 dernières heures</p>
+
+        <div id="charts" class="charts"></div>
       </div>
     </section>
+  </div>
+
+  <!-- Vue plein écran de l'historique -->
+  <div id="history-overlay" class="overlay" hidden role="dialog" aria-modal="true"
+       aria-labelledby="overlay-title">
+    <header class="overlay-head">
+      <div class="overlay-title">
+        <h2 id="overlay-title"></h2>
+        <span id="overlay-meta" class="muted"></span>
+      </div>
+
+      <div id="overlay-ranges" class="overlay-ranges"></div>
+
+      <button id="overlay-close" class="btn-icon" type="button" aria-label="Fermer">
+        ✕
+      </button>
+    </header>
+
+    <div class="overlay-body">
+      <p id="overlay-status" class="muted"></p>
+      <div id="overlay-charts" class="charts charts-full"></div>
+    </div>
   </div>
 
   <!-- Bibliothèques externes -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Adaptateur de dates : INDISPENSABLE pour l'échelle de temps (type: 'time').
+       Le bundle inclut date-fns, aucune dépendance supplémentaire requise.
+       Il doit impérativement être chargé APRÈS chart.js. -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
   <!-- Logique du site -->
   <script src="app.js"></script>
