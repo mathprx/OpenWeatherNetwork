@@ -71,17 +71,22 @@ const STATIONS = [
       field4: { label: 'Luminosité', unit: 'lux' },
     },
   },
+  /* AJOUTEZ VOTRE STATION SIMULÉE ICI */
   {
-    id: 'lausanne-01',
-    name: 'Lausanne Gare',
-    channelId: '789012',
-    apiKey: 'TA_CLE_READ_ONLY_ICI',
-    lat: 46.5197,
-    lon: 6.6275,
-    staleAfterMinutes: 30,
+    id: 'simu-station',
+    name: 'Station Simulée',
+    channelId: '3564665', // Remplacez par votre ID numérique
+    apiKey: 'TS58TDURZL07BA51', // Optionnel : mettez la clé de lecture si vous voulez restreindre l'accès
+                                    // Sinon laissez vide ou mettez la clé publique si le canal est public.
+                                    // Note: Pour lire, il faut souvent la clé si le canal n'est pas public.
+    lat: 48.8566,  // Exemple : Paris (vous pouvez changer les coordonnées)
+    lon: 2.3522,
+    staleAfterMinutes: 30, // Si aucune donnée reçue depuis 30 min, la station passe hors ligne
     fields: {
       field1: { label: 'Température', unit: '°C' },
-      field2: { label: 'Humidité', unit: '%', beginAtZero: true },
+      field2: { label: 'Humidité', unit: '%' },
+      field3: { label: 'Pression', unit: 'hPa' },
+      field4: { label: 'Luminosité', unit: 'lux' },
     },
   },
 ];
