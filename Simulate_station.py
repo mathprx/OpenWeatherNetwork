@@ -84,8 +84,8 @@ def main():
         # ThingSpeak impose un minimum de 15 secondes entre les envois en version gratuite.
         # Ici, on attend 15 minutes (900 secondes) pour correspondre à la config de votre app.js.
         # Pour tester rapidement, changez 900 en 15 ou 30.
-        print("Attente de 15 secondes avant la prochaine mesure...")
-        time.sleep(15) 
+        print("Attente de 15 minutes avant la prochaine mesure...")
+        time.sleep(15*60) 
 
 if __name__ == "__main__":
     main()
