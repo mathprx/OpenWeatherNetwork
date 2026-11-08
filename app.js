@@ -69,6 +69,9 @@ const STATIONS = [
       field2: { label: 'Pression', unit: 'hPa' },
       field3: { label: 'Humidité', unit: '%' },
       field4: { label: 'Luminosité', unit: 'lux' },
+      field5: { label: 'Direction du vent', unit: '°'},
+      field6: { label: 'Vitesse du vent', unit: 'm/s' },
+      field7: { label: 'Rafales', unit: 'm/s' },
     },
   },
   /* AJOUTEZ VOTRE STATION SIMULÉE ICI */
