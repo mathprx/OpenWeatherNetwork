@@ -1,6 +1,7 @@
 import requests
 import time
 import random
+import math
 from datetime import datetime
 
 # --- CONFIGURATION ---
@@ -22,14 +23,19 @@ BASE_VALUES = {
 
 def generate_simulated_data():
     """
-    Génère des valeurs légèrement modifiées par rapport aux bases 
-    pour simuler l'évolution naturelle du temps.
+    Génère des valeurs avec un cycle journalier de température et de luminosité,
+    ainsi que de légères variations aléatoires.
     """
     data = {}
-    
-    # Température : variation lente +/- 0.5°C
-    BASE_VALUES["temperature"] += random.uniform(-0.2, 0.2)
-    data["field1"] = round(BASE_VALUES["temperature"], 1)
+
+    current_time = datetime.now()
+    hour = current_time.hour + current_time.minute / 60 + current_time.second / 3600
+
+    # Température moyenne à 22°C, minimum vers 3h et maximum vers 15h.
+    temperature = BASE_VALUES["temperature"] + 5 * math.cos(
+        2 * math.pi * (hour - 15) / 24
+    )
+    data["field1"] = round(temperature + random.uniform(-0.2, 0.2), 1)
     
     # Humidité : variation +/- 2%
     BASE_VALUES["humidity"] += random.uniform(-1.0, 1.0)
@@ -41,11 +47,11 @@ def generate_simulated_data():
     BASE_VALUES["pressure"] += random.uniform(-0.5, 0.5)
     data["field3"] = round(BASE_VALUES["pressure"], 1)
     
-    # Luminosité : cycle jour/nuit simulé (simple variation aléatoire ici)
-    # Pour un vrai cycle, on pourrait utiliser la heure actuelle
-    current_light = BASE_VALUES["light"] + random.uniform(-50, 50)
-    BASE_VALUES["light"] = max(0, current_light)
-    data["field4"] = round(BASE_VALUES["light"], 0)
+    # Luminosité nulle la nuit, avec un maximum vers midi.
+    daylight = max(0, math.sin(math.pi * (hour - 6) / 12))
+    light = BASE_VALUES["light"] * daylight
+    light += random.uniform(-50, 50) * daylight
+    data["field4"] = round(max(0, light), 0)
     
     return data
 
