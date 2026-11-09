@@ -1,14 +1,11 @@
 /* ==========================================================================
    app.js — OpenWeatherNetwork
    --------------------------------------------------------------------------
-   NOUVEAU : axe des abscisses en ÉCHELLE DE TEMPS RÉELLE (type: 'time').
-   
-   Conséquences :
-   - Les dates/heures affichées sur l'axe X sont celles des mesures réelles
-   - La largeur d'une interruption est proportionnelle à sa durée réelle
-   - Les coupures sont matérialisées par une rupture de courbe
-   
+   NOUVEAU : sélecteur de plage récente dans le panneau de détail
+   (1 heure / 24 heures), en plus de l'historique complet (7/14/30 j).
+
    Autres points :
+   - Axe des abscisses en échelle de temps réelle (type: 'time')
    - Points de mesure visibles sur les courbes
    - Unité absente de l'axe Y (présente dans le titre de la carte)
    - Station Gif-sur-Yvette (field4 : Luminosité)
@@ -34,6 +31,12 @@ const CONFIG = {
   hoursPerDay: 24,
   daysRanges: { '7d': 7, '14d': 14, '30d': 30 },
 
+  /* Plages disponibles dans le panneau de détail (vue principale). */
+  recentRanges: {
+    '1h':  { hours: 1 },
+    '24h': { hours: 24 },
+  },
+
   /* Une interruption est signalée si l'écart entre deux mesures dépasse
      ce multiple de l'intervalle médian observé. 2.5 laisse passer un
      créneau isolé manqué, mais signale deux créneaux consécutifs absents. */
@@ -44,6 +47,11 @@ const CONFIG = {
 };
 
 const PALETTE = ['#6d4aff', '#e67e22', '#27ae60', '#e74c3c'];
+
+const RECENT_RANGE_LABELS = [
+  { key: '1h',  label: '1 heure' },
+  { key: '24h', label: '24 heures' },
+];
 
 const HISTORY_RANGES = [
   { key: '7d',  label: '7 jours' },
@@ -100,6 +108,7 @@ const STATIONS = [
 
 const state = {
   selected: null,
+  recentRange: '24h',          /* Plage affichée dans le panneau de détail */
   readings: new Map(),
   markers: new Map(),
   chartsDefault: [],
@@ -143,7 +152,11 @@ function calculateTimeRangeDays(days) {
 }
 
 function estimateMaxPoints(hours, intervalMinutes = CONFIG.feedIntervalMinutes) {
-  return Math.ceil((hours * 60) / intervalMinutes);
+  /* Plancher de sécurité : si la station émet plus vite que la cadence
+     nominale, on ne veut pas tronquer la série (le paramètre `results`
+     de ThingSpeak est un simple plafond, une valeur plus grande est
+     inoffensive). */
+  return Math.max(100, Math.ceil((hours * 60) / intervalMinutes));
 }
 
 /* ==========================================================================
@@ -222,6 +235,8 @@ const els = {
   detailMeta: document.getElementById('detail-meta'),
   detailValues: document.getElementById('detail-values'),
   btnHistory: document.getElementById('btn-history'),
+  recentRanges: document.getElementById('recent-ranges'),
+  recentLabel: document.getElementById('recent-label'),
   charts: document.getElementById('charts'),
   overlay: document.getElementById('history-overlay'),
   overlayTitle: document.getElementById('overlay-title'),
@@ -589,7 +604,7 @@ function drawCharts(container, charts, series, station, extraClass = '', rangeBo
 }
 
 /* ==========================================================================
-   14. VUE PLEIN ÉCRAN
+   14. VUE PLEIN ÉCRAN (HISTORIQUE COMPLET)
    ========================================================================== */
 
 function renderRangeButtons() {
@@ -679,24 +694,47 @@ async function loadFullHistory() {
 }
 
 /* ==========================================================================
-   15. SÉLECTION STATION
+   15. PLAGE RÉCENTE (1 H / 24 H) DANS LE PANNEAU DE DÉTAIL
    ========================================================================== */
 
-async function selectStation(id) {
-  const station = STATIONS.find((s) => s.id === id);
+/** Boutons 1 heure / 24 heures au-dessus des graphiques. */
+function renderRecentRangeButtons() {
+  els.recentRanges.innerHTML = '';
+
+  RECENT_RANGE_LABELS.forEach((range) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'mini-range-btn' + (state.recentRange === range.key ? ' active' : '');
+    btn.textContent = range.label;
+
+    btn.addEventListener('click', () => {
+      if (state.recentRange === range.key) return;
+      state.recentRange = range.key;
+      renderRecentRangeButtons();
+      loadRecentHistory();
+    });
+
+    els.recentRanges.appendChild(btn);
+  });
+}
+
+/**
+ * Charge et affiche les mesures de la plage récente sélectionnée
+ * (1 heure ou 24 heures) pour la station sélectionnée.
+ */
+async function loadRecentHistory() {
+  const station = STATIONS.find((s) => s.id === state.selected);
   if (!station) return;
 
-  state.selected = id;
-  renderList();
+  const hours = CONFIG.recentRanges[state.recentRange]?.hours ?? 24;
+  const timeRange = calculateTimeRange(hours);
+  const maxPoints = estimateMaxPoints(hours);
 
-  const cached = state.readings.get(id);
-  renderDetail(station, cached);
+  els.charts.innerHTML = '';
+  destroyCharts(state.chartsDefault);
 
   try {
-    const timeRange = calculateTimeRange(CONFIG.hoursPerDay);
-    const maxPoints = estimateMaxPoints(CONFIG.hoursPerDay);
-
-    const cacheKey = `history24h:${id}`;
+    const cacheKey = `recent:${station.id}:${state.recentRange}`;
     let payload = cacheGet(cacheKey);
 
     if (!payload) {
@@ -708,24 +746,41 @@ async function selectStation(id) {
     }
 
     if (!payload.length) {
-      els.status.textContent = `Aucune donnée sur les 24 dernières heures pour ${station.name}.`;
-      destroyCharts(state.chartsDefault);
-      els.charts.innerHTML = '';
+      els.status.textContent =
+        `Aucune donnée sur ${RECENT_RANGE_LABELS.find((r) => r.key === state.recentRange)?.label ?? 'la période'} pour ${station.name}.`;
       return;
     }
 
+    /* La dernière mesure de la plage sert aussi à rafraîchir les vignettes */
     renderDetail(station, payload.at(-1));
     drawCharts(els.charts, state.chartsDefault, payload, station, '', timeRange);
   } catch (err) {
-    console.error('[history24h]', err);
-    els.status.textContent = `Historique 24h indisponible pour ${station.name}.`;
+    console.error('[recent-history]', err);
+    els.status.textContent = `Historique indisponible pour ${station.name}.`;
     destroyCharts(state.chartsDefault);
     els.charts.innerHTML = '';
   }
 }
 
 /* ==========================================================================
-   16. RAFRAÎCHISSEMENT GLOBAL
+   16. SÉLECTION STATION
+   ========================================================================== */
+
+async function selectStation(id) {
+  const station = STATIONS.find((s) => s.id === id);
+  if (!station) return;
+
+  state.selected = id;
+  renderList();
+
+  /* Affichage immédiat avec ce qu'on a déjà en mémoire */
+  renderDetail(station, state.readings.get(id));
+
+  await loadRecentHistory();
+}
+
+/* ==========================================================================
+   17. RAFRAÎCHISSEMENT GLOBAL
    ========================================================================== */
 
 async function refreshAll() {
@@ -774,7 +829,7 @@ async function refreshAll() {
 }
 
 /* ==========================================================================
-   17. ÉVÉNEMENTS ET DÉMARRAGE
+   18. ÉVÉNEMENTS ET DÉMARRAGE
    ========================================================================== */
 
 els.btnHistory.addEventListener('click', openOverlay);
@@ -789,5 +844,6 @@ els.overlay.addEventListener('click', (e) => {
 });
 
 renderRangeButtons();
+renderRecentRangeButtons();
 refreshAll();
 setInterval(refreshAll, CONFIG.refreshMs);
